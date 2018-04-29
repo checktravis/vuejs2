@@ -1,61 +1,62 @@
-var webpack = require('webpack');
-var path = require('path');
+"use strict";
 
+let path = require('path');
+let webpack = require('webpack');
 
-// Naming and path settings
-var appName = 'app';
-var entryPoint = './src/main.js';
-var exportPath = path.resolve(__dirname, './build');
+let entryPoint = './src/app.js';
+let outputPath = path.resolve(__dirname, './build');
+let fileName = 'app.js';
 
-// Enviroment flag
-var plugins = [];
-var env = process.env.WEBPACK_ENV;
-var mode = process.env.WEBPACK_ENV;
+let plugins = [];
 
-// Differ settings based on production flag
+// Get the environment variable defined in the command (see package.json)
+let env = process.env.WEBPACK_ENV;
+
+// When compiling for production we want the app to be uglified.
 if (env === 'production') {
-  // var UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
+	let UglifyPlugin = webpack.optimize.UglifyJsPlugin;
 
-  // plugins.push(new UglifyJsPlugin({ minimize: true }));
-  plugins.push(new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: '"production"'
-      }
-    }
-  ));
+	plugins.push(new UglifyPlugin({minimize: true}));
 
-  appName = appName + '.min.js';
-} else {
-  appName = appName + '.js';
+	// We also add it as a global, the Vue lib needs it to determine if Dev tool should be active or not.
+	plugins.push(new webpack.DefinePlugin({
+		'process.env': {
+			NODE_ENV: '"production"'
+		}
+	}));
+	// Change file name extension to min.js
+	fileName = fileName.replace(/js/g, 'min.js');
 }
 
-// Main Settings config
+// Main webpack config
 module.exports = {
-  entry: entryPoint,
-  output: {
-    path: exportPath,
-    filename: appName
-  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
-        loader: 'babel-loader',
-        query: {
-          presets: ['es2015']
-        }
-      },
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader'
-      }
-    ]
-  },
-  resolve: {
-    alias: {
-      'vue$': 'vue/dist/vue.esm.js'
-    }
-  },
-  plugins
+	entry: {
+		app: [ entryPoint ]
+	},
+	output: {
+		path: outputPath,
+		filename: fileName
+	},
+	module: {
+		rules: [
+			{
+				test: /\.js$/,
+				exclude: /(node_modules|bower_components)/,
+				loader: 'babel-loader',
+				query: {
+					presets: ['es2015'] // Transpile the ES6 to es2015 standard
+				}
+			},
+			{
+				test: /\.vue$/,
+				loader: 'vue-loader'
+			}
+		]
+	},
+	resolve: {
+		alias: {
+			'vue$': 'vue/dist/vue.esm.js'  // Resolving the vue var for standalone build
+		}
+	},
+	plugins // set the previously defined plugins
 };
